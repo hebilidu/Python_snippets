@@ -1,10 +1,10 @@
 # Program name : myeval
-# Description  : emulate the Python "eval()" function
+# Description  : emulate the Python "eval()" function for the 4 basic arithmetic operations
 # Created on   : 210709 by: lidu
-# Modified on  : 210709 by: lidu
+# Modified on  : 210711 by: lidu
 
 def collect_input():
-    string = input("Please enter an arithmetic expression ('q' to stop): ")
+    string = input("Please enter an arithmetic expression with the four basic operators +, -, *, / ('q' to stop): ")
     if string in ("q", "Q"):
         return "QUIT"
     else:
@@ -18,7 +18,6 @@ def myeval(expression):
 
     result = ""
     expr_list = list(expression)
-    print(expr_list)
 
     # check expression contains only valid characters (incl. spaces)
     valid_chars_only = True
@@ -46,8 +45,8 @@ def myeval(expression):
         else:
             if char in [' ','.'] or char.isdigit():
                 buffer += char
-            elif char in ['+','-','*',':']: # marks the end of current operand
-                try:
+            elif char in ['+','-','*','/']: # marks the end of current operand
+                try: # store operand and operator
                     ops_list.append(float(buffer))
                     ops_list.append(char)
                     buffer = ""
@@ -60,21 +59,41 @@ def myeval(expression):
     if buffer == "": # empty buffer at this stage means the last operand is missing
         return f"The expression '{expression}' is incomplete"
     else:
-        try:
+        try: # do we have a regular floating number?
             ops_list.append(float(buffer))
-        except ValueError:
+        except ValueError: # apparently not
             has_invalid_operand = True
             return f"'{buffer}' is not a valid operand.\n"
 
-    return ops_list
-
-
-
-    # isinstance(x, (int, float))
-    # 
+    # print(ops_list) # test instruction
     
     # calculate the expression result
-    return expr_list
+    if len(ops_list) == 1: # particular case when expression is just a number
+        return f"{expression} = {ops_list[0]}"
+    # first pass on ops_list to execute the priority operations (* and /)
+    reduced_ops_list =[ops_list[0]]
+    for i,j in enumerate(ops_list):
+        if j == '*':
+            reduced_ops_list.append(reduced_ops_list.pop() * ops_list[i+1])
+        elif j == '/':
+            try:
+                reduced_ops_list.append(reduced_ops_list.pop() / ops_list[i+1])
+            except ZeroDivisionError:
+                return "Division by zero error!"
+        elif j in ['+', '-']:
+            reduced_ops_list.extend([ops_list[i-1], ops_list[i], ops_list[i+1]])
+
+    # print(reduced_ops_list) # test instruction
+
+    # second pass to execute the non priority operations (+ and -)
+    result = reduced_ops_list[0]
+    for i,j in enumerate(reduced_ops_list):
+        if j == '+':
+            result += reduced_ops_list[i+1]
+        elif j == '-':
+            result -= reduced_ops_list[i+1]
+
+    return f"{expression} = {result}"
 
 def main():
     """Main loop"""
@@ -84,7 +103,7 @@ def main():
             print("Thanks for your visit. Program ended.\n")
             break
         else:
-            print(myeval(input_string))
+            print(myeval(input_string), '\n')
 
 if __name__ == "__main__":
     main()
